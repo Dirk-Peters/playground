@@ -4,19 +4,44 @@ using DockerCli.Testbed;
 using Console = System.Console;
 
 var host = new DockerHost();
-var container = await host.Run(new ImageName("hello-world", "latest"));
-var isRunning = true;
-var log = await container.LogAndFollow();
+//await host.StartAndWaitForHelloWorld();
+await host.StartAndWaitForPostgres();
 
-using var subscription = log.Subscribe(
-    Console.WriteLine,
-    error => Console.Error.WriteLine(error),
-    () => isRunning = false);
 
-while (isRunning)
+public static class ContainerActions
 {
-    await Task.Yield();
-}
+    public static async Task StartAndLogHelloWorld(this DockerHost host)
+    {
+        var container = await host.Run(new ImageName("hello-world", "latest"));
+        await container.Log();
+        await container.Remove();
+    }
 
-await container.Remove();
-await Console.Out.FlushAsync();
+    public static async Task StartAndWaitForHelloWorld(this DockerHost host)
+    {
+        var container = await host.Run(new ImageName("hello-world", "latest"));
+
+        await container.WaitFor("https://docs.docker.com/engine/userguide/");
+
+        Console.WriteLine("container reached given line");
+        await container.Remove();
+    }
+
+    public static async Task StartAndWaitForPostgres(this DockerHost host)
+    {
+        var container = await host.Run(
+            new ImageName("postgres", "latest"),
+            o => o.Named("postgres-test")
+                .EnvironmentVariable("POSTGRES_PASSWORD", "socrates")
+                .MapPort(5432, 5432));
+
+        await container.WaitFor("database system is ready to accept connections");
+        Console.WriteLine("postgres ready");
+
+        await Task.Delay(TimeSpan.FromSeconds(15));
+        await container.Stop();
+        await container.Log();
+
+        await container.Remove();
+    }
+}

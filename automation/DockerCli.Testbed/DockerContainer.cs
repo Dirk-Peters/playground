@@ -45,6 +45,11 @@ namespace DockerCli.Testbed
                 outStream, CancellationToken.None);
         }
 
+        public async Task WaitFor(string message) =>
+            await (await LogAndFollow())
+                .Where(l => l.Contains(message))
+                .FirstAsync();
+
         public async Task<IObservable<string>> LogAndFollow()
         {
             var log = await client.Containers.GetContainerLogsAsync(
