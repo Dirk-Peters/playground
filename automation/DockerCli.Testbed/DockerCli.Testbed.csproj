@@ -6,7 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="bridgefield.MonadicBits" Version="0.4.0" />
       <PackageReference Include="Docker.DotNet" Version="3.125.5" />
+      <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
     </ItemGroup>
 
 </Project>
