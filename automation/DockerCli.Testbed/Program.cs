@@ -1,19 +1,31 @@
 ﻿using System;
 using System.Threading.Tasks;
-using DockerCli.Testbed;
+using Docker;
+using Npgsql;
 using Console = System.Console;
 
 var host = new DockerHost();
 //await host.StartAndWaitForHelloWorld();
-await host.StartAndWaitForPostgres();
 
+var container = await host.StartAndWaitForPostgres();
+await using var connection = new NpgsqlConnection("User id=postgres;Password=socrates;Host=localhost;Port=5432;Database=postgres");
+
+await connection.OpenAsync();
+var command = connection.CreateCommand();
+command.CommandText = "create table event_streams{ aggreagate_id  }";
+
+
+await container.Stop();
+await container.LogToConsole();
+
+await container.Remove();
 
 public static class ContainerActions
 {
     public static async Task StartAndLogHelloWorld(this DockerHost host)
     {
         var container = await host.Run(new ImageName("hello-world", "latest"));
-        await container.Log();
+        await container.LogToConsole();
         await container.Remove();
     }
 
@@ -27,7 +39,7 @@ public static class ContainerActions
         await container.Remove();
     }
 
-    public static async Task StartAndWaitForPostgres(this DockerHost host)
+    public static async Task<DockerContainer> StartAndWaitForPostgres(this DockerHost host)
     {
         var container = await host.Run(
             new ImageName("postgres", "latest"),
@@ -39,9 +51,7 @@ public static class ContainerActions
         Console.WriteLine("postgres ready");
 
         await Task.Delay(TimeSpan.FromSeconds(15));
-        await container.Stop();
-        await container.Log();
 
-        await container.Remove();
+        return container;
     }
 }
