@@ -1,7 +1,6 @@
-using System.Threading.Tasks;
 using Docker;
 
-namespace Spec.Isolation.PerTest;
+namespace Spec.Common;
 
 public static class SystemUnderTest
 {

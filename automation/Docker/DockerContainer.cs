@@ -1,4 +1,3 @@
-
 using System.Reactive.Linq;
 using System.Text;
 using Docker.DotNet;
@@ -38,6 +37,16 @@ public sealed class DockerContainer
             Stream.Null,
             outStream,
             outStream, CancellationToken.None);
+    }
+
+    public async Task<(string stdOut, string errorOut)> Log()
+    {
+        using var log = await client.Containers.GetContainerLogsAsync(
+            id,
+            false,
+            new ContainerLogsParameters { Follow = false, ShowStdout = true },
+            CancellationToken.None);
+        return await log.ReadOutputToEndAsync(CancellationToken.None);
     }
 
     public async Task WaitFor(string message) =>
